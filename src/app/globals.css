@@ -1,27 +1,38 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* globals.css
+ * Minimal global reset for HealWell.
+ * Most styling is done inline per component (mobile-first spec).
+ * Tailwind base is kept for utility access where needed.
+ */
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
+ *,
+ *::before,
+ *::after {
+   box-sizing: border-box;
+   margin: 0;
+   padding: 0;
+ }
+ 
+ html {
+   font-size: 16px;
+   -webkit-text-size-adjust: 100%;
+ }
+ 
+ body {
+   line-height: 1.6;
+   color: #111827;
+ }
+ 
+ button {
+   font-family: inherit;
+ }
+ 
+ a {
+   color: inherit;
+ }
+ 
+ img,
+ svg {
+   display: block;
+   max-width: 100%;
+ }
+ 
