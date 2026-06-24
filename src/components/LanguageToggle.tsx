@@ -1,14 +1,22 @@
 /**
- * LanguageToggle.tsx
+ * LanguageToggle.tsx — 4-language switcher in the header
  *
- * Renders the 4-language switcher (EN / ES / HI / GU) shown in the top
- * header on every page. Each label is written in its own script so users
- * can identify their language without needing to read another language first.
+ * Renders compact language buttons (EN · ES · हिन्दी · ગુજ) in the header.
+ * Uses short codes to save horizontal space while remaining recognisable.
+ * Active language uses the current theme's accent colour (filled).
+ * Inactive languages use a tinted background from the current theme.
+ *
+ * A thin vertical divider separates the theme dots from language buttons.
  *
  * Behaviour:
- * - Reads the current language from localStorage (healwell.language)
- * - On tap, writes the new language to localStorage and refreshes the page
- * - The active language is visually highlighted
+ * - Reads current language from localStorage (healwell.language)
+ * - On tap: writes new language to localStorage and refreshes the page
+ * - Colours adapt automatically to the active theme via getTheme()
+ *
+ * Languages: en | es | hi | gu
+ * Short labels: EN · ES · हिन्दी · ગુજ
+ * Strings: src/i18n/strings.ts
+ * Theme: src/lib/theme.ts
  *
  * Used in: src/app/layout.tsx (top header, every page)
  */
@@ -17,14 +25,19 @@
 
 import { useRouter } from "next/navigation"
 import { getLanguage, setLanguage, type Language } from "@/lib/localStorage"
-import { getStrings } from "@/i18n/strings"
+import { getTheme } from "@/lib/theme"
 
-const LANGUAGES: Language[] = ["en", "es", "hi", "gu"]
+const LANGUAGES: { code: Language; label: string }[] = [
+  { code: "en", label: "EN" },
+  { code: "es", label: "ES" },
+  { code: "hi", label: "हिन्दी" },
+  { code: "gu", label: "ગુજ" },
+]
 
 export default function LanguageToggle() {
   const router = useRouter()
   const current = getLanguage()
-  const s = getStrings(current)
+  const theme = getTheme()
 
   function handleChange(lang: Language) {
     setLanguage(lang)
@@ -32,30 +45,47 @@ export default function LanguageToggle() {
   }
 
   return (
-    <div style={{ display: "flex", gap: "4px" }}>
-      {LANGUAGES.map((lang) => (
-        <button
-          key={lang}
-          onClick={() => handleChange(lang)}
-          style={{
-            background:
-              current === lang
-                ? "rgba(255,255,255,0.25)"
-                : "rgba(255,255,255,0.08)",
-            border: "none",
-            borderRadius: "6px",
-            color: current === lang ? "white" : "rgba(255,255,255,0.65)",
-            fontSize: "11px",
-            padding: "5px 7px",
-            cursor: "pointer",
-            fontWeight: current === lang ? 500 : 400,
-            whiteSpace: "nowrap",
-          }}
-          aria-label={`Switch to ${lang}`}
-        >
-          {s.languages[lang]}
-        </button>
-      ))}
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      {/* Thin divider separating theme dots from language buttons */}
+      <div
+        style={{
+          width: "0.5px",
+          height: "20px",
+          background: theme.accentLine,
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Language buttons */}
+      <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
+        {LANGUAGES.map(({ code, label }) => {
+          const isActive = current === code
+          return (
+            <button
+              key={code}
+              onClick={() => handleChange(code)}
+              aria-label={`Switch to ${code}`}
+              aria-pressed={isActive}
+              style={{
+                background: isActive ? theme.accent : theme.accentLight,
+                border: `0.5px solid ${isActive ? theme.accent : theme.accentLine}`,
+                borderRadius: "5px",
+                color: isActive ? "white" : theme.textM,
+                fontSize: "10px",
+                padding: "4px 6px",
+                cursor: "pointer",
+                fontWeight: isActive ? 500 : 400,
+                whiteSpace: "nowrap",
+                minHeight: "44px",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

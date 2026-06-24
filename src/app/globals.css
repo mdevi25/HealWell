@@ -1,7 +1,6 @@
 /* globals.css
- * Minimal global reset for HealWell.
- * Most styling is done inline per component (mobile-first spec).
- * Tailwind base is kept for utility access where needed.
+ * Global reset + CSS custom properties for HealWell.
+ * Palette sourced from Noor "blue" theme by Madhu Devi.
  */
 
  *,
@@ -19,7 +18,21 @@
  
  body {
    line-height: 1.6;
-   color: #111827;
+   color: #1A5272;
+   background: #EDF6FF;
+ }
+ 
+ :root {
+   --bg:           #EDF6FF;
+   --bg-band:      #D6ECFA;
+   --bg-card:      #FFFFFF;
+   --accent:       #4A9FD4;
+   --accent-deep:  #2B7BAD;
+   --text-h:       #0D2E42;
+   --text-b:       #1A5272;
+   --text-m:       #2B7BAD;
+   --text-s:       #5A9EC0;
+   --border:       #D6ECFA;
  }
  
  button {

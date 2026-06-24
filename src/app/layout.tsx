@@ -2,16 +2,26 @@
  * layout.tsx — Root Layout
  *
  * Wraps every page in the app with:
- * - Top header: HealWell logo + LanguageToggle
+ * - Top header: HealWell logo + ThemeSwitcher dots + divider + LanguageToggle
  * - Page content (children)
  * - Footer with disclaimer
  * - BottomNav: 5-tab fixed navigation bar
  *
- * The admin route (/admin) shares this layout visually but the
- * BottomNav filters it out — admin is reached by URL only.
+ * Header layout (left → right):
+ *   HealWell logo  |  [● ● ●]  |  [EN] [ES] [हिन्दी] [ગુજ]
  *
- * Fonts: uses Next.js built-in font optimisation (Inter).
- * All user-facing strings come from i18n/strings.ts via components.
+ * The divider between dots and language buttons is rendered inside
+ * LanguageToggle.tsx so the two components stay self-contained.
+ *
+ * Theme is read from localStorage (healwell.theme) on every load.
+ * Switching theme triggers a full page reload so all inline styles update.
+ *
+ * The admin route (/admin) shares this layout but BottomNav
+ * excludes it — admin is reached by URL only.
+ *
+ * Fonts: Inter via Next.js font optimisation.
+ * Colours: src/lib/theme.ts (3 themes: blue, green, cream)
+ * Strings: src/i18n/strings.ts via components
  */
 
 import type { Metadata } from "next"
@@ -19,6 +29,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import BottomNav from "@/components/BottomNav"
 import LanguageToggle from "@/components/LanguageToggle"
+import ThemeSwitcher from "@/components/ThemeSwitcher"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,45 +54,61 @@ export default function RootLayout({
         style={{
           margin: 0,
           padding: 0,
-          background: "#f9fafb",
           fontFamily: "var(--font-inter), sans-serif",
           WebkitFontSmoothing: "antialiased",
         }}
       >
-        {/* ── Outer centering wrapper ── */}
         <div
+          id="app-root"
           style={{
             maxWidth: "430px",
             margin: "0 auto",
             minHeight: "100vh",
-            background: "white",
+            background: "#FFFFFF",
             position: "relative",
           }}
         >
           {/* ── Top header ── */}
           <header
             style={{
-              background: "#0D9488",
-              padding: "14px 16px",
+              padding: "0 14px",
+              height: "56px",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               position: "sticky",
               top: 0,
               zIndex: 40,
+              background: "#D6ECFA",
+              borderBottom: "0.5px solid rgba(74, 159, 212, 0.22)",
+              overflow: "hidden",
             }}
           >
+            {/* Logo */}
             <span
               style={{
-                color: "white",
-                fontSize: "18px",
+                fontSize: "17px",
                 fontWeight: 500,
                 letterSpacing: "-0.3px",
+                color: "#0D2E42",
+                flexShrink: 0,
               }}
             >
               HealWell
             </span>
-            <LanguageToggle />
+
+            {/* Right side — theme dots + language toggle */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0px",
+                flexShrink: 0,
+              }}
+            >
+              <ThemeSwitcher />
+              <LanguageToggle />
+            </div>
           </header>
 
           {/* ── Page content ── */}
@@ -89,6 +116,7 @@ export default function RootLayout({
             style={{
               padding: "20px 16px 0",
               minHeight: "calc(100vh - 140px)",
+              background: "#EDF6FF",
             }}
           >
             {children}
@@ -99,14 +127,15 @@ export default function RootLayout({
             style={{
               padding: "20px 16px",
               textAlign: "center",
-              borderTop: "0.5px solid #e5e7eb",
+              borderTop: "0.5px solid #D6ECFA",
               marginTop: "24px",
+              background: "#FFFFFF",
             }}
           >
             <p
               style={{
                 fontSize: "11px",
-                color: "#9ca3af",
+                color: "#5A9EC0",
                 margin: 0,
                 lineHeight: 1.6,
               }}

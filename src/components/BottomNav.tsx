@@ -1,18 +1,7 @@
 /**
  * BottomNav.tsx
- *
- * Fixed bottom navigation bar shown on all 5 user-facing pages.
- * Tabs: Home · Check-In · Coach · Story · Trends
- *
- * Behaviour:
- * - Active tab is highlighted in teal (#0D9488)
- * - Tab labels are pulled from i18n strings so they update with language
- * - A spacer div is rendered above the nav to prevent page content
- *   from being hidden behind the fixed bar
- * - The admin route (/admin) is NOT included here — it is URL-only
- *
- * Icons: Tabler Icons webfont (loaded via CDN link)
- * Used in: src/app/layout.tsx (wraps every user-facing page)
+ * Fixed 5-tab bottom navigation bar.
+ * Palette: Noor blue theme.
  */
 
 "use client"
@@ -21,6 +10,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { getLanguage } from "@/lib/localStorage"
 import { getStrings } from "@/i18n/strings"
+import { theme } from "@/lib/theme"
 
 const TABS = [
   { key: "home",    href: "/",        icon: "ti-home" },
@@ -49,7 +39,6 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Tabler icons font */}
       <link
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"
@@ -62,8 +51,8 @@ export default function BottomNav() {
           transform: "translateX(-50%)",
           width: "100%",
           maxWidth: "430px",
-          background: "white",
-          borderTop: "0.5px solid #e5e7eb",
+          background: theme.bgCard,
+          borderTop: `0.5px solid ${theme.border}`,
           display: "flex",
           justifyContent: "space-around",
           padding: "10px 0 18px",
@@ -91,14 +80,14 @@ export default function BottomNav() {
                 className={`ti ${tab.icon}`}
                 style={{
                   fontSize: "22px",
-                  color: active ? "#0D9488" : "#9ca3af",
+                  color: active ? theme.accent : theme.textS,
                 }}
                 aria-hidden="true"
               />
               <span
                 style={{
                   fontSize: "10px",
-                  color: active ? "#0D9488" : "#9ca3af",
+                  color: active ? theme.accent : theme.textS,
                   fontWeight: active ? 500 : 400,
                 }}
               >
@@ -108,7 +97,6 @@ export default function BottomNav() {
           )
         })}
       </nav>
-      {/* Spacer so content doesn't hide behind fixed nav */}
       <div style={{ height: "80px" }} />
     </>
   )
