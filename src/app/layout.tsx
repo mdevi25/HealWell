@@ -1,23 +1,14 @@
 /**
  * layout.tsx — Root Layout
  *
- * Wraps every page in the app with:
- * - Top header: HealWell logo + ThemeSwitcher dots + divider + LanguageToggle
- * - Page content (children)
- * - Footer with disclaimer
- * - BottomNav: 5-tab fixed navigation bar
+ * Wraps every page with header, footer and BottomNav.
+ * Uses suppressHydrationWarning on body to prevent hydration
+ * mismatch errors caused by localStorage reads (theme, language)
+ * which only run on the client, not the server.
  *
- * Header layout (left → right):
- *   HealWell logo  |  [● ● ●]  |  [EN] [ES] [हिन्दी] [ગુજ]
- *
- * The divider between dots and language buttons is rendered inside
- * LanguageToggle.tsx so the two components stay self-contained.
- *
- * Theme is read from localStorage (healwell.theme) on every load.
- * Switching theme triggers a full page reload so all inline styles update.
- *
- * The admin route (/admin) shares this layout but BottomNav
- * excludes it — admin is reached by URL only.
+ * Header colours are hardcoded to blue theme defaults here —
+ * ThemeSwitcher and LanguageToggle handle their own client-side
+ * theme reads after mount.
  *
  * Fonts: Inter via Next.js font optimisation.
  * Colours: src/lib/theme.ts (3 themes: blue, green, cream)
@@ -48,9 +39,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={inter.variable}
+        suppressHydrationWarning
         style={{
           margin: 0,
           padding: 0,
@@ -84,7 +76,6 @@ export default function RootLayout({
               overflow: "hidden",
             }}
           >
-            {/* Logo */}
             <span
               style={{
                 fontSize: "17px",
@@ -96,8 +87,6 @@ export default function RootLayout({
             >
               HealWell
             </span>
-
-            {/* Right side — theme dots + language toggle */}
             <div
               style={{
                 display: "flex",
