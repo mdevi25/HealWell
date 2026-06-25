@@ -12,12 +12,11 @@
  *
  * Structure mirrors the page/component hierarchy:
  * - nav, languages, home, checkin, energyLabels, wornOutLabels,
- *   movements, coach, story, trends, admin, pro, footer
+ *   movements, movementDescriptions, coach, story, trends, admin, pro, footer
  *
- * Emoji scales (universal — same across all languages):
- * - Energy:   😴 → 😔 → 😐 → 🙂 → ⚡  (worst to best)
- * - Worn out: 💀 → 😩 → 😓 → 🙂 → 😊  (worst to best)
- * - Body:     🦶 🦵 🧍 🙆 🤲 🫁
+ * Movement descriptions (spec Section 4):
+ * - Exact text from spec, translated into all 4 languages
+ * - Ordered bottom-to-top: feet → legs → back → shoulders → wrists → breathing
  *
  * Usage: import { getStrings } from "@/i18n/strings"
  *        const s = getStrings(getLanguage())
@@ -35,7 +34,7 @@ const en = {
     trends:  "Trends",
   },
 
-  // ── Language toggle labels (native scripts — same in all languages) ─────────
+  // ── Language toggle labels ───────────────────────────────────────────────────
   languages: {
     en: "🇺🇸 English",
     es: "🇪🇸 Español",
@@ -104,7 +103,7 @@ const en = {
     fine:     "Fine",
   },
 
-  // ── Movement / body area labels ─────────────────────────────────────────────
+  // ── Movement area labels (used in check-in chips + coach cards) ─────────────
   movements: {
     feet:      "Feet",
     legs:      "Legs",
@@ -114,19 +113,33 @@ const en = {
     breathing: "Breathing",
   },
 
+  // ── Movement descriptions (exact per spec Section 4, translated) ─────────────
+  movementDescriptions: {
+    feet:      "Kick off your shoes and roll your arches slowly over a cold water bottle or tennis ball — spend about two minutes per foot.",
+    legs:      "Rise up slowly onto your toes, hold for two seconds, then lower back down. Do this ten times — it pumps blood that has been pooling in your legs back up where it belongs.",
+    back:      "Sway your hips slowly side to side for thirty seconds, like you're listening to a slow song. This unlocks the hip flexors that tighten from standing in one position all day.",
+    shoulders: "Roll your shoulders slowly backward five times, then forward five times — imagine trying to make your shoulder blades meet behind you.",
+    wrists:    "Circle your wrists gently in both directions for two minutes to release tension.",
+    breathing: "Take five deep belly breaths. Breathe in for four counts, out for six. This signals to your nervous system that the shift is over.",
+  },
+
   // ── Coach page ──────────────────────────────────────────────────────────────
   coach: {
-    title:              "Your Recovery Plan",
-    hydration:          (hours: number, extra: number) =>
+    title:                "Your Recovery Plan",
+    bodyReset:            "Let's help your body reset.",
+    hydrationLabel:       "Hydration",
+    focusMovements:       "Your Focus Today",
+    otherMovements:       "Other Movements",
+    hydration:            (hours: number, extra: number) =>
       `You worked ${hours} hours today — try to get ${extra} more glass${extra === 1 ? "" : "es"} of water in before you sleep.`,
-    baseHydration:      "Aim for 6 glasses of water today.",
-    movementDisclaimer: "This is a gentle blood-flow reset, not medical treatment. If anything feels sharp or wrong, stop.",
-    noCheckin:          "Complete today's check-in to see your recovery plan.",
-    goCheckin:          "Go to Check-In",
-    feedbackPrompt:     "Did this help?",
-    feedbackThanks:     "Thanks ✓",
-    proTeaser:          "Unlock all 6 recovery movements with HealWell Pro.",
-    unlockPro:          "Unlock with HealWell Pro",
+    baseHydration:        "Aim for 6 glasses of water today.",
+    movementDisclaimer:   "This is a gentle blood-flow reset, not medical treatment. If anything feels sharp or wrong, stop.",
+    noCheckin:            "Complete today's check-in to see your recovery plan.",
+    goCheckin:            "Go to Check-In",
+    feedbackPrompt:       "Did this help?",
+    feedbackThanks:       "Thanks ✓",
+    proTeaser:            "Unlock all 6 recovery movements with HealWell Pro.",
+    unlockPro:            "Unlock with HealWell Pro",
   },
 
   // ── Story page ──────────────────────────────────────────────────────────────
@@ -266,8 +279,20 @@ const es: typeof en = {
     wrists:    "Muñecas",
     breathing: "Respiración",
   },
+  movementDescriptions: {
+    feet:      "Quítate los zapatos y rueda lentamente los arcos de tus pies sobre una botella de agua fría o una pelota de tenis — dedica unos dos minutos por pie.",
+    legs:      "Súbete lentamente de puntillas, mantén dos segundos, luego baja. Hazlo diez veces — esto bombea la sangre que se ha acumulado en tus piernas de vuelta a donde pertenece.",
+    back:      "Mueve tus caderas lentamente de lado a lado durante treinta segundos, como si estuvieras escuchando una canción lenta. Esto libera los flexores de cadera que se tensan por estar de pie en una posición todo el día.",
+    shoulders: "Rueda tus hombros lentamente hacia atrás cinco veces, luego hacia adelante cinco veces — imagina que intentas que tus omóplatos se encuentren detrás de ti.",
+    wrists:    "Haz círculos suavemente con tus muñecas en ambas direcciones durante dos minutos para liberar la tensión.",
+    breathing: "Toma cinco respiraciones profundas de barriga. Inhala durante cuatro tiempos, exhala durante seis. Esto le indica a tu sistema nervioso que el turno ha terminado.",
+  },
   coach: {
     title:              "Tu Plan de Recuperación",
+    bodyReset:          "Vamos a ayudar a tu cuerpo a recuperarse.",
+    hydrationLabel:     "Hidratación",
+    focusMovements:     "Tu Enfoque de Hoy",
+    otherMovements:     "Otros Movimientos",
     hydration:          (hours: number, extra: number) =>
       `Trabajaste ${hours} horas hoy — intenta tomar ${extra} vaso${extra === 1 ? "" : "s"} más de agua antes de dormir.`,
     baseHydration:      "Intenta tomar 6 vasos de agua hoy.",
@@ -407,8 +432,20 @@ const hi: typeof en = {
     wrists:    "कलाइयां",
     breathing: "सांस",
   },
+  movementDescriptions: {
+    feet:      "अपने जूते उतारें और अपने पैर के आर्च को धीरे-धीरे एक ठंडी पानी की बोतल या टेनिस बॉल पर रोल करें — प्रत्येक पैर पर लगभग दो मिनट बिताएं।",
+    legs:      "धीरे-धीरे अपने पंजों पर उठें, दो सेकंड रुकें, फिर वापस नीचे आएं। यह दस बार करें — यह आपकी टांगों में जमा हुए खून को वापस ऊपर पंप करता है जहां वह होना चाहिए।",
+    back:      "तीस सेकंड के लिए अपने कूल्हों को धीरे-धीरे दाएं-बाएं हिलाएं, जैसे आप एक धीमा गाना सुन रहे हों। यह उन हिप फ्लेक्सर्स को खोलता है जो पूरे दिन एक ही स्थिति में खड़े रहने से कस जाते हैं।",
+    shoulders: "अपने कंधों को धीरे-धीरे पाँच बार पीछे की ओर और फिर पाँच बार आगे की ओर घुमाएं — कल्पना करें कि आप अपने कंधे के ब्लेड को पीछे मिलाने की कोशिश कर रहे हैं।",
+    wrists:    "तनाव दूर करने के लिए दो मिनट तक अपनी कलाइयों को दोनों दिशाओं में धीरे-धीरे घुमाएं।",
+    breathing: "पाँच गहरी पेट की सांसें लें। चार गिनती तक सांस लें, छह गिनती तक छोड़ें। यह आपके तंत्रिका तंत्र को संकेत देता है कि शिफ्ट खत्म हो गई है।",
+  },
   coach: {
     title:              "आपका रिकवरी प्लान",
+    bodyReset:          "आइए आपके शरीर को रीसेट करने में मदद करें।",
+    hydrationLabel:     "हाइड्रेशन",
+    focusMovements:     "आज का फोकस",
+    otherMovements:     "अन्य मूवमेंट",
     hydration:          (hours: number, extra: number) =>
       `आपने आज ${hours} घंटे काम किया — सोने से पहले ${extra} और गिलास पानी पिएं।`,
     baseHydration:      "आज 6 गिलास पानी पीने का लक्ष्य रखें।",
@@ -548,8 +585,20 @@ const gu: typeof en = {
     wrists:    "કાંડા",
     breathing: "શ્વાસ",
   },
+  movementDescriptions: {
+    feet:      "તમારા જૂતા કાઢો અને તમારા પગના કમાનને ધીમે-ધીમે ઠંડી પાણીની બોટલ અથવા ટેનિસ બૉલ પર ફેરવો — દરેક પગ પર લગભગ બે મિનિટ વિતાવો.",
+    legs:      "ધીમે-ધીમે તમારા અંગૂઠા પર ઊઠો, બે સેકન્ડ રોકો, પછી નીચે આવો. આ દસ વખત કરો — આ તમારા પગમાં જમા થયેલા લોહીને પાછું ઉપર પંપ કરે છે જ્યાં તે હોવું જોઈએ.",
+    back:      "ત્રીસ સેકન્ડ માટે તમારા હિપ્સને ધીમે-ધીમે બાજુ-બાજુ હલાવો, જાણે તમે ધીમું ગીત સાંભળી રહ્યા હો. આ હિપ ફ્લેક્સર્સ ખોલે છે જે આખો દિવસ એક જ સ્થિતિમાં ઊભા રહેવાથી ખેંચાઈ જાય છે.",
+    shoulders: "તમારા ખભાને ધીમે-ધીમે પાંચ વખત પાછળ અને પછી પાંચ વખત આગળ ફેરવો — કલ્પના કરો કે તમે તમારા ખભાના બ્લેડને પાછળ મળાવવાનો પ્રયાસ કરી રહ્યા છો.",
+    wrists:    "તણાવ મુક્ત કરવા માટે બે મિનિટ સુધી તમારા કાંડાને બંને દિશામાં ધીમે-ધીમે ફેરવો.",
+    breathing: "પાંચ ઊંડા પેટના શ્વાસ લો. ચાર ગણતરી માટે શ્વાસ લો, છ માટે છોડો. આ તમારા નર્વસ સિસ્ટમને સંકેત આપે છે કે શિફ્ટ પૂરી થઈ ગઈ છે.",
+  },
   coach: {
     title:              "તમારી રિકવરી પ્લાન",
+    bodyReset:          "આઇए આપણે તમારા શરીરને રીસેટ કરવામાં મદદ કરીએ.",
+    hydrationLabel:     "હાઇડ્રેશન",
+    focusMovements:     "આજનું ફોકસ",
+    otherMovements:     "અન્ય મૂવમેન્ટ",
     hydration:          (hours: number, extra: number) =>
       `તમે આજે ${hours} કલાક કામ કર્યું — સૂતા પહેલાં ${extra} વધુ ગ્લાસ પાણી પીઓ.`,
     baseHydration:      "આજે 6 ગ્લાસ પાણી પીવાનો લક્ષ્ય રાખો.",
