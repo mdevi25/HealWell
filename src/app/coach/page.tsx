@@ -7,21 +7,18 @@
  * Content (per spec Section 4 + 5):
  * - Hydration tip: base 6 glasses + 1 per hour over 8 worked
  * - Movement cards split into two sections:
- *   1. "Your Focus Today" — movements the worker selected in check-in
- *      shown prominently at full size
- *   2. "Other Movements" — remaining movements shown in a lighter,
- *      slightly muted style so the full plan is still available
+ *   1. "Your Focus Today" — movements selected in check-in (prominent)
+ *   2. "Other Movements" — remaining movements (muted)
  * - ThumbsFeedback component (fire-and-forget to /api/feedback)
+ * - Story nudge card — warm invitation to read shift reflection
  * - Movement disclaimer per spec Section 10
  *
- * All movement descriptions come from src/i18n/strings.ts
- * (movementDescriptions section) — no hardcoded text.
+ * All movement descriptions from src/i18n/strings.ts
+ * All display strings from src/i18n/strings.ts
+ * Theme colours from src/lib/theme.ts
  *
  * Graceful degradation: if no check-in today, prompts user
  * to check in rather than crashing or showing blank content.
- *
- * All display strings from src/i18n/strings.ts
- * Theme colours from src/lib/theme.ts
  *
  * Data read:  healwell.checkins, healwell.language, healwell.theme
  * Data written: none
@@ -79,7 +76,7 @@ export default function CoachPage() {
   const s     = getStrings(getLanguage())
   const theme = getTheme()
 
-  // Shared card styles
+  // ── Shared card styles ────────────────────────────────────────────────────
   const card = {
     background:   theme.bgCard,
     borderRadius: "14px",
@@ -89,7 +86,6 @@ export default function CoachPage() {
     border:       `0.5px solid ${theme.border}`,
   }
 
-  // Muted card for "other" movements
   const cardMuted = {
     background:   theme.bgCard,
     borderRadius: "14px",
@@ -100,7 +96,7 @@ export default function CoachPage() {
     opacity:      0.75,
   }
 
-  // ── Hydration formula (spec Section 5) ───────────────────────────────────────
+  // ── Hydration formula (spec Section 5) ────────────────────────────────────
   const extraGlasses = checkin
     ? Math.max(0, Math.floor(checkin.hoursWorked - 8))
     : 0
@@ -111,7 +107,7 @@ export default function CoachPage() {
       : s.coach.baseHydration
     : s.coach.baseHydration
 
-  // ── Split movements into selected + others ────────────────────────────────────
+  // ── Split movements into selected + others ────────────────────────────────
   const selectedKeys = checkin?.movements ?? []
 
   const selectedMovements = MOVEMENT_ORDER.filter((m) =>
@@ -121,7 +117,7 @@ export default function CoachPage() {
     (m) => !selectedKeys.includes(m.key)
   )
 
-  // ── No check-in state ─────────────────────────────────────────────────────────
+  // ── No check-in state ─────────────────────────────────────────────────────
   if (!checkin) {
     return (
       <div style={{ paddingBottom: "16px" }}>
@@ -264,7 +260,7 @@ export default function CoachPage() {
                   color:      theme.textH,
                   margin:     0,
                 }}>
-                  {s.movements[movement.key]}
+                  {s.movements[movement.key as MovementKey]}
                 </p>
               </div>
               <p style={{
@@ -273,7 +269,7 @@ export default function CoachPage() {
                 margin:     0,
                 lineHeight: 1.7,
               }}>
-                {s.movementDescriptions[movement.key]}
+                {s.movementDescriptions[movement.key as MovementKey]}
               </p>
             </div>
           ))}
@@ -312,7 +308,7 @@ export default function CoachPage() {
                   color:      theme.textH,
                   margin:     0,
                 }}>
-                  {s.movements[movement.key]}
+                  {s.movements[movement.key as MovementKey]}
                 </p>
               </div>
               <p style={{
@@ -321,7 +317,7 @@ export default function CoachPage() {
                 margin:     0,
                 lineHeight: 1.6,
               }}>
-                {s.movementDescriptions[movement.key]}
+                {s.movementDescriptions[movement.key as MovementKey]}
               </p>
             </div>
           ))}
@@ -331,6 +327,82 @@ export default function CoachPage() {
       {/* ── Thumbs feedback ── */}
       <div style={{ marginTop: "8px" }}>
         <ThumbsFeedback feature="coach" />
+      </div>
+
+      {/* ── Story nudge card ── */}
+      <div style={{
+        background:   theme.bgCard,
+        borderRadius: "14px",
+        padding:      "18px",
+        marginTop:    "8px",
+        marginBottom: "14px",
+        boxShadow:    theme.cardShadow,
+        border:       `0.5px solid ${theme.border}`,
+        display:      "flex",
+        flexDirection:"column",
+        gap:          "12px",
+      }}>
+        <div style={{
+          display:   "flex",
+          alignItems:"flex-start",
+          gap:       "12px",
+        }}>
+          <div style={{
+            width:          "40px",
+            height:         "40px",
+            borderRadius:   "50%",
+            background:     theme.accentLight,
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+            flexShrink:     0,
+            fontSize:       "20px",
+          }}>
+            ✨
+          </div>
+          <div>
+            <p style={{
+              fontSize:   "14px",
+              fontWeight: 500,
+              color:      theme.textH,
+              margin:     "0 0 4px",
+              lineHeight: 1.3,
+            }}>
+              {s.coach.storyNudgeTitle}
+            </p>
+            <p style={{
+              fontSize:   "13px",
+              color:      theme.textB,
+              margin:     0,
+              lineHeight: 1.6,
+            }}>
+              {s.coach.storyNudgeBody}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => router.push("/story")}
+          style={{
+            background:     theme.accent,
+            color:          "white",
+            border:         "none",
+            borderRadius:   "10px",
+            padding:        "13px 20px",
+            fontSize:       "14px",
+            fontWeight:     500,
+            width:          "100%",
+            cursor:         "pointer",
+            minHeight:      "48px",
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+            gap:            "8px",
+          }}
+        >
+          <span>✨</span>
+          {s.coach.storyNudgeButton}
+        </button>
       </div>
 
       {/* ── Movement disclaimer (spec Section 10) ── */}
