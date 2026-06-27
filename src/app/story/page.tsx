@@ -1,35 +1,6 @@
 /**
  * page.tsx — Story Page (/story)
- *
- * Generates a warm, personalised AI shift story based purely on
- * today's check-in data. No extra form fields — the worker taps
- * one button and the AI does the rest.
- *
- * Flow:
- * 1. Reads today's check-in from localStorage
- * 2. Shows "shift at a glance" summary card
- * 3. Worker taps "Generate My Story"
- * 4. Sends check-in data to Make.com webhook → Groq AI
- * 5. Displays warm story + gentle movement nudge +
- *    tiny recovery action + thumbs feedback + Pro invite
- *
- * Recovery status display (replaces abstract score):
- * - 🔴 "Your body deserves extra care tonight"  (high)
- * - 🟡 "A little rest will go a long way"        (moderate)
- * - 🟢 "You're in good shape today"              (low)
- *
- * Free users see:  shiftStory + movementNudge + tinyRecoveryAction + disclaimer
- * Pro users see:   above + emotionalTheme + wellnessPattern
- *
- * Graceful degradation:
- * - No check-in → prompt to check in first
- * - Webhook failure → calm fallback message, never raw error
- *
- * All display strings from src/i18n/strings.ts
- * Theme colours from src/lib/theme.ts
- *
- * Data read:  healwell.checkins, healwell.language, healwell.theme, healwell.plan
- * Data written: none (story not persisted — generated fresh each time)
+ * Fixed: isSuccessful() handles both boolean true and string "True" from n8n
  */
 
 "use client"
@@ -48,9 +19,8 @@ import { getTheme } from "@/lib/theme"
 import ThumbsFeedback from "@/components/ThumbsFeedback"
 import ProGate from "@/components/ProGate"
 
-// ── Webhook response shape (per spec Section 6) ───────────────────────────────
 interface StoryResponse {
-  success:            boolean
+  success:            boolean | string
   shiftStory:         string
   emotionalTheme:     string
   wellnessPattern:    string
@@ -58,7 +28,6 @@ interface StoryResponse {
   disclaimer:         string
 }
 
-// ── Energy emoji map (matches check-in values) ────────────────────────────────
 const ENERGY_EMOJI: Record<number, string> = {
   2:  "😴",
   4:  "😔",
@@ -91,7 +60,6 @@ const WORN_OUT_LABEL: Record<number, string> = {
   2:  "Fine",
 }
 
-// ── Movement emoji map ────────────────────────────────────────────────────────
 const MOVEMENT_EMOJI: Record<string, string> = {
   feet:      "🦶",
   legs:      "🦵",
@@ -101,14 +69,12 @@ const MOVEMENT_EMOJI: Record<string, string> = {
   breathing: "🫁",
 }
 
-// ── Recovery status (warm, non-alarming language) ─────────────────────────────
 const RECOVERY_STATUS = {
   high:     { color: "#ef4444", shadow: "rgba(239,68,68,0.12)",    label: "Your body deserves extra care tonight" },
   moderate: { color: "#f59e0b", shadow: "rgba(245,158,11,0.12)",   label: "A little rest will go a long way" },
   low:      { color: "#10b981", shadow: "rgba(16,185,129,0.12)",   label: "You're in good shape today" },
 }
 
-// ── Movement nudge generator ───────────────────────────────────────────────────
 function getMovementNudge(movements: string[]): string {
   if (movements.length === 0) {
     return "Your Coach plan has gentle movements ready whenever you feel like it."
@@ -146,6 +112,11 @@ function getMovementNudge(movements: string[]): string {
   return `Your ${named} did the heavy work today — ${ending}`
 }
 
+// ── Handles boolean true OR string "True"/"true" returned by n8n ──────────────
+function isSuccessful(value: boolean | string): boolean {
+  return value === true || value === "True" || value === "true"
+}
+
 export default function StoryPage() {
   const router  = useRouter()
   const [checkin, setCheckin]     = useState<CheckIn | null>(null)
@@ -158,7 +129,6 @@ export default function StoryPage() {
     setMounted(true)
     setCheckin(getTodayCheckin())
 
-    // Fire-and-forget usage event
     try {
       fetch("/api/event", {
         method: "POST",
@@ -181,7 +151,6 @@ export default function StoryPage() {
   const plan   = getPlan()
   const isPro  = plan === "pro"
 
-  // Shared card style
   const card = {
     background:   theme.bgCard,
     borderRadius: "14px",
@@ -191,7 +160,6 @@ export default function StoryPage() {
     border:       `0.5px solid ${theme.border}`,
   }
 
-  // ── No check-in state ───────────────────────────────────────────────────────
   if (!checkin) {
     return (
       <div style={{ paddingBottom: "16px" }}>
@@ -248,13 +216,9 @@ export default function StoryPage() {
     )
   }
 
-  // ── Recovery status ─────────────────────────────────────────────────────────
   const status = RECOVERY_STATUS[checkin.riskLevel]
-
-  // ── Movement nudge ──────────────────────────────────────────────────────────
   const movementNudge = getMovementNudge(checkin.movements)
 
-  // ── Generate story ──────────────────────────────────────────────────────────
   async function handleGenerate() {
     setLoading(true)
     setError(false)
@@ -283,9 +247,11 @@ export default function StoryPage() {
 
       if (!res.ok) throw new Error("Webhook failed")
 
-      const data: StoryResponse = await res.json()
+        const raw = await res.json()
+        const data: StoryResponse = Array.isArray(raw) ? raw[0] : raw
 
-      if (!data.success) throw new Error("Story generation failed")
+      // Handle both boolean true and string "True"/"true" from n8n
+      if (!isSuccessful(data.success)) throw new Error("Story generation failed")
 
       setStory(data)
     } catch {
@@ -298,7 +264,6 @@ export default function StoryPage() {
   return (
     <div style={{ paddingBottom: "16px" }}>
 
-      {/* ── Page heading ── */}
       <div style={{ marginBottom: "20px" }}>
         <p style={{
           fontSize:      "12px",
@@ -321,7 +286,6 @@ export default function StoryPage() {
         </p>
       </div>
 
-      {/* ── Shift at a glance ── */}
       <div style={card}>
         <p style={{
           fontSize:      "11px",
@@ -367,13 +331,12 @@ export default function StoryPage() {
             </div>
           )}
 
-          {/* Recovery status — warm, non-alarming */}
           <div style={{
-            borderTop:   `0.5px solid ${theme.border}`,
-            paddingTop:  "10px",
-            display:     "flex",
+            borderTop:      `0.5px solid ${theme.border}`,
+            paddingTop:     "10px",
+            display:        "flex",
             justifyContent: "space-between",
-            alignItems:  "center",
+            alignItems:     "center",
           }}>
             <span style={{ fontSize: "13px", color: theme.textS }}>How you're doing</span>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -394,7 +357,6 @@ export default function StoryPage() {
         </div>
       </div>
 
-      {/* ── Generate button or loading or error ── */}
       {!story && !loading && (
         <>
           <p style={{
@@ -409,20 +371,20 @@ export default function StoryPage() {
           <button
             onClick={handleGenerate}
             style={{
-              background:   theme.accent,
-              color:        "white",
-              border:       "none",
-              borderRadius: "12px",
-              padding:      "16px 24px",
-              fontSize:     "16px",
-              fontWeight:   500,
-              width:        "100%",
-              cursor:       "pointer",
-              minHeight:    "56px",
-              display:      "flex",
-              alignItems:   "center",
+              background:     theme.accent,
+              color:          "white",
+              border:         "none",
+              borderRadius:   "12px",
+              padding:        "16px 24px",
+              fontSize:       "16px",
+              fontWeight:     500,
+              width:          "100%",
+              cursor:         "pointer",
+              minHeight:      "56px",
+              display:        "flex",
+              alignItems:     "center",
               justifyContent: "center",
-              gap:          "8px",
+              gap:            "8px",
             }}
           >
             <span>✨</span>
@@ -431,19 +393,18 @@ export default function StoryPage() {
         </>
       )}
 
-      {/* ── Loading state ── */}
       {loading && (
         <div style={{
-          background:   theme.accentLight,
-          border:       `0.5px solid ${theme.accentLine}`,
-          borderRadius: "12px",
-          padding:      "20px",
-          textAlign:    "center",
-          minHeight:    "56px",
-          display:      "flex",
-          alignItems:   "center",
+          background:     theme.accentLight,
+          border:         `0.5px solid ${theme.accentLine}`,
+          borderRadius:   "12px",
+          padding:        "20px",
+          textAlign:      "center",
+          minHeight:      "56px",
+          display:        "flex",
+          alignItems:     "center",
           justifyContent: "center",
-          gap:          "10px",
+          gap:            "10px",
         }}>
           <span style={{ fontSize: "20px" }}>✨</span>
           <span style={{ fontSize: "15px", color: theme.accentDeep, fontWeight: 500 }}>
@@ -452,7 +413,6 @@ export default function StoryPage() {
         </div>
       )}
 
-      {/* ── Error state ── */}
       {error && (
         <div style={{
           ...card,
@@ -486,10 +446,8 @@ export default function StoryPage() {
         </div>
       )}
 
-      {/* ── Story output ── */}
       {story && (
         <>
-          {/* Pro only — emotional theme + wellness pattern */}
           {isPro && (
             <div style={{
               ...card,
@@ -515,7 +473,6 @@ export default function StoryPage() {
             </div>
           )}
 
-          {/* Shift story */}
           <div style={card}>
             <p style={{
               fontSize:      "11px",
@@ -537,7 +494,6 @@ export default function StoryPage() {
             </p>
           </div>
 
-          {/* Gentle movement nudge */}
           <div style={{
             ...card,
             display:    "flex",
@@ -567,7 +523,6 @@ export default function StoryPage() {
             </div>
           </div>
 
-          {/* Tiny recovery action */}
           <div style={{
             background:   theme.accentLight,
             borderRadius: "10px",
@@ -595,15 +550,12 @@ export default function StoryPage() {
             </p>
           </div>
 
-          {/* Thumbs feedback */}
           <ThumbsFeedback feature="story" />
 
-          {/* Pro gate — inline mode (never blocks free story) */}
           {!isPro && (
             <ProGate mode="inline" />
           )}
 
-          {/* Disclaimer */}
           <p style={{
             fontSize:   "11px",
             color:      theme.textS,
