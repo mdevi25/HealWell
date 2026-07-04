@@ -20,7 +20,7 @@ guidance, and receive an AI-generated reflection on their shift.
 2. Copy `.env.example` to `.env.local` and fill in your webhook URL
 3. Run `npm install`
 4. Run `npm run dev`
-5. Open http://localhost:3001
+5. Open http://localhost:3000
 
 ## Environment Variables
 | Variable | Description |
