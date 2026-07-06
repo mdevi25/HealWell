@@ -114,7 +114,7 @@ export default function AdminPage() {
         display:        "flex",
         alignItems:     "center",
         justifyContent: "center",
-        background:     theme.bgPage,
+        background:     theme.bgCard,
         padding:        "24px",
       }}>
         <div style={{
