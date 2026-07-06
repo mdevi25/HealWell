@@ -153,7 +153,7 @@ export default function AdminPage() {
               borderRadius: "10px",
               border:       `0.5px solid ${theme.border}`,
               fontSize:     "15px",
-              background:   theme.bgPage,
+              background:   theme.bgCard,
               color:        theme.textH,
               marginBottom: "12px",
               boxSizing:    "border-box",
@@ -207,7 +207,7 @@ export default function AdminPage() {
 
   return (
     <div style={{
-      background: theme.bgPage,
+      background: theme.bgCard,
       minHeight:  "100vh",
       padding:    "24px 16px",
       maxWidth:   "480px",
