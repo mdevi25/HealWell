@@ -196,10 +196,10 @@ export default function AdminPage() {
   }
 
   // ── Dashboard ─────────────────────────────────────────────────────────────
-  const features = [...new Set([
+  const features = Array.from(new Set([
     ...data.featureBreakdown.map((f) => f.feature),
     ...data.feedbackSummary.map((f) => f.feature),
-  ])]
+  ]))
 
   const totalFeedback = data.feedbackSummary.reduce((acc, f) => acc + f.count, 0)
   const totalUp       = data.feedbackSummary.filter((f) => f.rating === "up").reduce((acc, f) => acc + f.count, 0)
