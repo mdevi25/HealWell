@@ -22,9 +22,14 @@
  * Data written: none
  */
 
+/**
+ * page.tsx — Trends Page (/trends)
+ * Fixed: replaced chart.js with inline SVG chart (no external dependency)
+ */
+
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   getCheckins,
@@ -37,19 +42,16 @@ import { getDeviceId } from "@/lib/deviceId"
 import { getTheme } from "@/lib/theme"
 import ProGate from "@/components/ProGate"
 
-// ── Energy emoji map ──────────────────────────────────────────────────────────
 const ENERGY_EMOJI: Record<number, string> = {
   2: "😴", 4: "😔", 6: "😐", 8: "🙂", 10: "⚡",
 }
 
-// ── Risk level colour map ─────────────────────────────────────────────────────
 const RISK_COLOR: Record<string, string> = {
   high:     "#ef4444",
   moderate: "#f59e0b",
   low:      "#10b981",
 }
 
-// ── Date formatter — reads from i18n strings ──────────────────────────────────
 function formatDate(
   dateStr: string,
   s: ReturnType<typeof import("@/i18n/strings").getStrings>
@@ -70,12 +72,86 @@ function formatDate(
   })
 }
 
+// ── Inline SVG chart — no chart.js dependency ─────────────────────────────────
+function SimpleSVGChart({
+  data,
+  s,
+}: {
+  data: CheckIn[]
+  s: ReturnType<typeof import("@/i18n/strings").getStrings>
+}) {
+  if (data.length === 0) return null
+
+  const W      = 320
+  const H      = 130
+  const pad    = { top: 10, bottom: 24, left: 24, right: 10 }
+  const chartW = W - pad.left - pad.right
+  const chartH = H - pad.top - pad.bottom
+  const maxVal = 12
+
+  const xPos = (i: number) =>
+    pad.left + (data.length === 1 ? chartW / 2 : (i / (data.length - 1)) * chartW)
+  const yPos = (v: number) =>
+    pad.top + chartH - (v / maxVal) * chartH
+
+  const sleepPoints  = data.map((c, i) => `${xPos(i)},${yPos(c.sleepHours)}`).join(" ")
+  const energyPoints = data.map((c, i) => `${xPos(i)},${yPos(c.energy)}`).join(" ")
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "130px" }} role="img" aria-label={s.trends.chartLabel}>
+      {/* Grid lines */}
+      {[0, 4, 8, 12].map((v) => (
+        <line
+          key={v}
+          x1={pad.left} y1={yPos(v)}
+          x2={W - pad.right} y2={yPos(v)}
+          stroke="rgba(74,159,212,0.15)" strokeWidth="1"
+        />
+      ))}
+      {/* Y axis labels */}
+      {[0, 4, 8, 12].map((v) => (
+        <text
+          key={`label-${v}`}
+          x={pad.left - 4} y={yPos(v) + 3}
+          fontSize="8" fill="#5A9EC0" textAnchor="end"
+        >
+          {v}
+        </text>
+      ))}
+      {/* Sleep line */}
+      <polyline
+        points={sleepPoints}
+        fill="none" stroke="#4A9FD4" strokeWidth="2"
+        strokeLinejoin="round" strokeLinecap="round"
+      />
+      {/* Energy line */}
+      <polyline
+        points={energyPoints}
+        fill="none" stroke="#10b981" strokeWidth="2"
+        strokeDasharray="5,3"
+        strokeLinejoin="round" strokeLinecap="round"
+      />
+      {/* Dots + x labels */}
+      {data.map((c, i) => (
+        <g key={c.date}>
+          <circle cx={xPos(i)} cy={yPos(c.sleepHours)} r="4" fill="#4A9FD4" />
+          <circle cx={xPos(i)} cy={yPos(c.energy)}     r="4" fill="#10b981" />
+          <text
+            x={xPos(i)} y={H - 4}
+            textAnchor="middle" fontSize="8" fill="#5A9EC0"
+          >
+            {formatDate(c.date, s).slice(0, 3)}
+          </text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
 export default function TrendsPage() {
-  const router        = useRouter()
-  const chartRef      = useRef<HTMLCanvasElement>(null)
-  const chartInstance = useRef<unknown>(null)
-  const [checkins, setCheckins] = useState<CheckIn[]>([])
-  const [mounted, setMounted]   = useState(false)
+  const router                          = useRouter()
+  const [checkins, setCheckins]         = useState<CheckIn[]>([])
+  const [mounted, setMounted]           = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -99,84 +175,6 @@ export default function TrendsPage() {
     }
   }, [])
 
-  // ── Build chart ───────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!mounted || !chartRef.current || checkins.length === 0) return
-
-    const s    = getStrings(getLanguage())
-    const plan = getPlan()
-    const days = plan === "pro" ? 7 : 3
-    const data = checkins.slice(0, days).reverse()
-
-    const loadChart = async () => {
-      const { Chart, registerables } = await import("chart.js")
-      Chart.register(...registerables)
-
-      if (chartInstance.current) {
-        (chartInstance.current as { destroy: () => void }).destroy()
-      }
-
-      chartInstance.current = new Chart(chartRef.current!, {
-        type: "line",
-        data: {
-          labels:   data.map((c) => formatDate(c.date, s)),
-          datasets: [
-            {
-              label:               s.trends.chartSleep,
-              data:                data.map((c) => c.sleepHours),
-              borderColor:         "#4A9FD4",
-              backgroundColor:     "rgba(74,159,212,0.08)",
-              borderWidth:         2,
-              pointBackgroundColor:"#4A9FD4",
-              pointRadius:         5,
-              tension:             0.3,
-              fill:                true,
-            },
-            {
-              label:               s.trends.chartEnergy,
-              data:                data.map((c) => c.energy),
-              borderColor:         "#10b981",
-              backgroundColor:     "transparent",
-              borderWidth:         2,
-              borderDash:          [5, 3],
-              pointBackgroundColor:"#10b981",
-              pointRadius:         5,
-              tension:             0.3,
-              fill:                false,
-            },
-          ],
-        },
-        options: {
-          responsive:          true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: {
-              display: true,
-              ticks:   { color: "#5A9EC0", font: { size: 10 }, maxRotation: 0 },
-              grid:    { display: false },
-            },
-            y: {
-              display: true,
-              min:     0,
-              max:     12,
-              ticks:   { stepSize: 4, color: "#5A9EC0", font: { size: 10 } },
-              grid:    { color: "rgba(74,159,212,0.1)" },
-            },
-          },
-        },
-      })
-    }
-
-    loadChart()
-
-    return () => {
-      if (chartInstance.current) {
-        (chartInstance.current as { destroy: () => void }).destroy()
-      }
-    }
-  }, [mounted, checkins])
-
   if (!mounted) return null
 
   const s     = getStrings(getLanguage())
@@ -193,7 +191,7 @@ export default function TrendsPage() {
     border:       `0.5px solid ${theme.border}`,
   }
 
-  // ── No check-ins ──────────────────────────────────────────────────────────
+  // ── No check-ins ────────────────────────────────────────────────────────────
   if (checkins.length === 0) {
     return (
       <div style={{ paddingBottom: "16px" }}>
@@ -250,11 +248,12 @@ export default function TrendsPage() {
     )
   }
 
-  // ── Data ──────────────────────────────────────────────────────────────────
+  // ── Data ─────────────────────────────────────────────────────────────────────
   const recent3     = checkins.slice(0, 3)
   const avgSleep    = recent3.reduce((acc, c) => acc + c.sleepHours, 0) / recent3.length
   const avgShift    = recent3.reduce((acc, c) => acc + c.hoursWorked, 0) / recent3.length
   const displayRows = isPro ? checkins.slice(0, 7) : checkins.slice(0, 3)
+  const chartData   = (isPro ? checkins.slice(0, 7) : checkins.slice(0, 3)).reverse()
 
   return (
     <div style={{ paddingBottom: "16px" }}>
@@ -282,7 +281,7 @@ export default function TrendsPage() {
         </p>
       </div>
 
-      {/* ── Summary cards — no subtext inside each card ── */}
+      {/* ── Summary cards ── */}
       <div style={{
         display:             "grid",
         gridTemplateColumns: "repeat(2, minmax(0,1fr))",
@@ -344,7 +343,7 @@ export default function TrendsPage() {
         </div>
       </div>
 
-      {/* ── Single centred subtext below both cards ── */}
+      {/* ── Check-in count ── */}
       <p style={{
         fontSize:  "12px",
         color:     theme.textS,
@@ -392,10 +391,10 @@ export default function TrendsPage() {
               }}
             >
               <span style={{
-                fontSize:  "12px",
-                color:     theme.textS,
+                fontSize:   "12px",
+                color:      theme.textS,
                 flexShrink: 0,
-                minWidth:  "80px",
+                minWidth:   "80px",
               }}>
                 {formatDate(checkin.date, s)}
               </span>
@@ -409,8 +408,8 @@ export default function TrendsPage() {
                 flexWrap:       "wrap",
               }}>
                 <span style={{
-                  fontSize:  "12px",
-                  color:     theme.textH,
+                  fontSize:   "12px",
+                  color:      theme.textH,
                   fontWeight: 500,
                 }}>
                   {emoji} {checkin.sleepHours}h sleep · {checkin.hoursWorked}h shift
@@ -435,13 +434,13 @@ export default function TrendsPage() {
         })}
       </div>
 
-      {/* ── Sleep & Energy line chart ── */}
+      {/* ── SVG Chart ── */}
       <div style={card}>
         <div style={{
           display:        "flex",
           justifyContent: "space-between",
           alignItems:     "center",
-          marginBottom:   "12px",
+          marginBottom:   "10px",
         }}>
           <p style={{
             fontSize:      "11px",
@@ -465,15 +464,7 @@ export default function TrendsPage() {
           </div>
         </div>
 
-        <div style={{ position: "relative", width: "100%", height: "140px" }}>
-          <canvas
-            ref={chartRef}
-            role="img"
-            aria-label={s.trends.chartLabel}
-          >
-            {s.trends.chartLabel}
-          </canvas>
-        </div>
+        <SimpleSVGChart data={chartData} s={s} />
       </div>
 
       {/* ── Pro gate ── */}
